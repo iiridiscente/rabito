@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rabito 🐰 Tienda Kawaii</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Decoración flotante de fondo -->
+    <div class="bg-decor" aria-hidden="true">
+      <span class="bg-decor__dot bg-decor__dot--1"></span>
+      <span class="bg-decor__dot bg-decor__dot--2"></span>
+      <span class="bg-decor__dot bg-decor__dot--3"></span>
+      <span class="bg-decor__dot bg-decor__dot--4"></span>
+      <span class="bg-decor__star bg-decor__star--1">✦</span>
+      <span class="bg-decor__star bg-decor__star--2">✦</span>
+      <span class="bg-decor__star bg-decor__star--3">✿</span>
+    </div>
+
+    <!-- Navbar -->
+    <navbar-component
+      :cart-count="totalItems"
+      :cart-open="cartOpen"
+      :search-query="searchQuery"
+      @toggle-cart="cartOpen = !cartOpen; selectedProduct = null"
+      @update-search="searchQuery = $event"
+    ></navbar-component>
+
+    <!-- Hero -->
+    <hero-section v-if="!cartOpen && !selectedProduct" @go-catalog="scrollToCatalog"></hero-section>
+
+    <!-- Catálogo -->
+    <main class="main" v-if="!cartOpen && !selectedProduct" id="catalogo">
+
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-title__deco">✿</span>
+          Colección
+          <span class="section-title__deco">✿</span>
+        </h2>
+
+        <!-- Filtros por categoría (BONUS) -->
+        <div class="filters">
+          <button
+            v-for="cat in categories"
+            :key="cat"
+            class="filter-tag"
+            :class="{ 'filter-tag--active': activeCategory === cat }"
+            @click="activeCategory = cat"
+          >{{ cat }}</button>
+        </div>
+
+        <!-- Búsqueda (BONUS) -->
+        <div class="search-bar">
+          <span class="search-bar__icon">🔍</span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar en Rabito..."
+            class="search-bar__input"
+          />
+          <button v-if="searchQuery" class="search-bar__clear" @click="searchQuery = ''">✕</button>
+        </div>
+      </div>
+
+      <!-- Sin resultados -->
+      <p class="no-results" v-if="filteredProducts.length === 0">
+        🐰 No encontramos productos con ese criterio, ¡sigue explorando!
+      </p>
+
+      <!-- Lista de productos -->
+      <product-list
+        :products="filteredProducts"
+        @add-to-cart="addToCart"
+        @view-detail="viewDetail"
+      ></product-list>
+
+    </main>
+
+    <!-- Detalle de producto -->
+    <product-detail
+      v-if="selectedProduct && !cartOpen"
+      :product="selectedProduct"
+      @close="selectedProduct = null"
+      @add-to-cart="addToCart"
+    ></product-detail>
+
+    <!-- Carrito -->
+    <cart-component
+      v-if="cartOpen"
+      :cart="cart"
+      @remove-item="removeFromCart"
+      @update-quantity="updateQuantity"
+      @checkout="checkout"
+      @close="cartOpen = false"
+    ></cart-component>
+
+    <!-- Toast -->
+    <transition name="toast-anim">
+      <div class="toast" v-if="toastMsg">
+        <span class="toast__icon">🐰</span>
+        {{ toastMsg }}
+      </div>
+    </transition>
+
+    <section class="testimonials" v-if="!cartOpen && !selectedProduct">
+      <div class="section-header section-header--small">
+        <h2 class="section-title">
+          <span class="section-title__deco">✧</span>
+          Testimonios
+          <span class="section-title__deco">✧</span>
+        </h2>
+        <p class="section-subtitle">Historias de compras felices de clientes que aman el estilo kawaii de Rabito.</p>
+      </div>
+
+      <div class="testimonials__grid">
+        <article class="testimonial-card">
+          <p>“Mi pedido llegó rápido y el paquete era precioso. Las piezas son aún más lindas en persona. 🥰”</p>
+          <strong>— Camila, Arica</strong>
+        </article>
+
+        <article class="testimonial-card">
+          <p>“El servicio fue muy amable y me ayudaron a elegir el accesorio perfecto. ¡Volveré por más!”</p>
+          <strong>— Valeria, Vallenar</strong>
+        </article>
+
+        <article class="testimonial-card">
+          <p>“Me encantó el detalle del empaque. Todo se siente muy cuidado y lleno de ternura.”</p>
+          <strong>— Sofía, Santiago</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="info-section" v-if="!cartOpen && !selectedProduct">
+      <div class="section-header section-header--small">
+        <h2 class="section-title">
+          <span class="section-title__deco">✧</span>
+          Información
+          <span class="section-title__deco">✧</span>
+        </h2>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card">Contáctanos y correo</div>
+        <div class="info-card">Cambios y devoluciones</div>
+        <div class="info-card">Información métodos de pago</div>
+        <div class="info-card">Información de envíos</div>
+        <div class="info-card">Preguntas frecuentes</div>
+        <div class="info-card">Bases y condiciones</div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" v-if="!cartOpen && !selectedProduct">
+      <span>🐰 Rabito — Moda Kawaii ✦ Hecho con amor ✦ 2025</span>
+    </footer>
+
+    
+  </div>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Componentes -->
+  <script src="components/Navbar.js"></script>
+  <script src="components/Hero.js"></script>
+  <script src="components/ProductCard.js"></script>
+  <script src="components/ProductList.js"></script>
+  <script src="components/ProductDetail.js"></script>
+  <script src="components/Cart.js"></script>
+
+  <!-- App -->
+  <script src="js/app.js"></script>
+</body>
+</html>
